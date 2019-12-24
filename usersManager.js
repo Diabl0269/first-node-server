@@ -25,10 +25,10 @@ module.exports = {
         password
     }) => {
         return new Promise((resolve, reject) => {
-            connection.connect();
+            //        connection.connect();
             connection.query(`INSERT INTO drill (first_name, last_name, id, password)
                                VALUES ('${first_name}', '${last_name}', '${id}', '${password}');`, function (error, results, fiels) {
-                connection.end();
+                //            connection.end();
                 if (error) reject(error);
                 resolve({
                     data: `${first_name} added succesefully`,
@@ -44,10 +44,10 @@ module.exports = {
         return new Promise((resolve, reject) => {
             // connection.connect();
             connection.query(`SELECT * from drill where id='${id}' AND password='${password}'`, function (error, results, fiels) {
-                //     connection.end();
                 if (error) reject(error);
                 resolve(results[0]);
             })
+            console.log(connection.state);
         })
     },
     changeDetails: async ({
@@ -64,8 +64,9 @@ module.exports = {
     },
     deleteRecord: async (id) => {
         return new Promise((resolve, reject) => {
-            //gonna check if the record is not deleted allready.
-            let x = connection.query(`SELECT * from drill WHERE id='${id}'`);
+            connection.query(`SELECT * from drill WHERE id='${id}'`, function (error, results, fields) {
+                //check here if the object is deleted
+            });
             let d = new Date();
             d = d.toISOString();
             connection.query(`UPDATE drill SET delete_date = '${d}' WHERE id='${id}'`, function (error, results, fields) {
@@ -73,9 +74,6 @@ module.exports = {
                 console.log(results);
                 resolve(results[0]);
             }
-                //     })
-                // }
-                // else reject(`User deleted on ${x}`);
             )
         })
     }

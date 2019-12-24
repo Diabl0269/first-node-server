@@ -66,8 +66,6 @@ app.post('/api/login', (req, res) => {
             res.send(JSON.stringify(responseObj));
         }
         else {
-            console.log(userDetails.id);
-            
             jwt.sign({ userDetails }, `${userDetails.id}`, {expiresIn: '120s'}, (err, token) => {
                 res.json(token);
             })
