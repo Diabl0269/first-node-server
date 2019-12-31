@@ -1,11 +1,12 @@
-const port = 3000;
+const port = 5000;
 const express = require('express');
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser'); 
 const app = express();
 const userManager = require('./usersManager');
 const jwt = require('jsonwebtoken');
-
-app.use(bodyParser.json());
+const verifyToken = require('./utilities/verifyToken');
+app.use(bodyParser.json()); 
+require('./server_init')(app);
 
 //get a user by id
 app.get('/user/:userId/details', verifyToken, (req, res) => {
@@ -13,13 +14,12 @@ app.get('/user/:userId/details', verifyToken, (req, res) => {
     jwt.verify(req.token, `${userId}`, (err, authData) => {
         if (err) res.sendStatus(403);
         else {
-            
-            let userDetails = userManager.getUserByID(userId).then((userDetails) => {
+             userManager.getUserByID(userId).then((userDetails) => {
                 let responseObj = {};
                 if (!userDetails) {
                     res.statusCode = 403;
                     responseObj.data = null;
-                    responseObj.error = 'user not found'
+                    responseObj.error = 'user not found';
                 }
                 else {
                     responseObj.data = userDetails;
@@ -32,27 +32,27 @@ app.get('/user/:userId/details', verifyToken, (req, res) => {
     })
 });
 
-app.post('/user/details/change/update', verifyToken, (req, res) => {
-   console.log(req.body.id);
-   
+app.post('/user/details/update', (req, res) => {
+    console.log('Here');
+    
     jwt.verify(req.token, `${req.body.id}`, (err, authData) => {
         if (err) res.sendStatus(403);
         else {
             const userDetails = req.body;
             userManager.changeDetails(userDetails).then((userDetails) => {
                 res.send(JSON.stringify(userDetails));
-            });
-        }
+            }).catch(e => res.send(JSON.stringify(e)));
+        };
     })
 });
 
 //add a user
-app.post('/user/details/add', inputValidation,(req, res) => {
-    const userDetails = req.body;
-    userManager.addUser(userDetails).then((userDetails) => {
-        res.send(JSON.stringify(userDetails));
-    });
-});
+// app.post('/user/details/add', inputValidation, (req, res) => {
+//     const userDetails = req.body;
+//     userManager.addUser(userDetails).then((userDetails) => {
+//         res.send(JSON.stringify(userDetails));
+//     });
+// });
 
 //Login - get a user by id and password and return jwt
 app.post('/api/login', (req, res) => {
@@ -66,7 +66,9 @@ app.post('/api/login', (req, res) => {
             res.send(JSON.stringify(responseObj));
         }
         else {
-            jwt.sign({ userDetails }, `${userDetails.id}`, {expiresIn: '120s'}, (err, token) => {
+            if (userDetails.delete_date)
+                res.send(`User deleted on ${userDetails.delete_date}`);
+            jwt.sign({ userDetails }, `${userDetails.id}`, { expiresIn: '120s' }, (err, token) => {
                 res.json(token);
             })
         };
@@ -74,36 +76,17 @@ app.post('/api/login', (req, res) => {
 
 });
 
-app.put('/user/:userId/delete', (req, res) => {
-    const userId = req.params.userId;
-    userManager.deleteRecord(userId).then((userId) =>{
-        res.send('user deleted');
+app.put('/user/:userId/delete', verifyToken, (req, res) => {
+    jwt.verify(req.token, `${req.params.userId}`, (err, authData) => {
+        if (err) res.sendStatus(403);
+        else {
+            const userId = req.params.userId;
+            userManager.deleteRecord(userId).then((userId) => {
+                res.send('user deleted');
+            }).catch(e => res.send(JSON.stringify(e)));
+        };
     });
 });
-
-//verify jwt to use in other functions
-function verifyToken(req, res, next) {
-    const bearerHeader = req.headers['authorization'];
-    if (typeof bearerHeader !== 'undefined') {
-        const bearer = bearerHeader.split(' ');
-        const bearerToken = bearer[1];
-        req.token = bearerToken;
-        next();
-    }
-    else {
-        res.sendStatus(403);
-    }
-};
-
-function inputValidation(req, res, next){
-    let {id, first_name, last_name, password} = req.body;
-    if(id == '' || id == undefined ||
-        first_name == '' || first_name == undefined ||
-        last_name == '' || last_name == undefined ||
-        password == '' || password == undefined)
-            res.sendStatus(403);
-    else next();
-}
 
 //start the server on port 3000
 app.listen(port, () => {
