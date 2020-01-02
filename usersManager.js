@@ -71,7 +71,7 @@ module.exports = {
                 else message = 'User not found';
                 if(message) return reject(message); 
                 let d = new Date();
-                //d = d.toISOString();
+                d = d.toISOString();
                 connection.query(`UPDATE drill SET delete_date = '${d}' WHERE id='${id}'`, function (error, results, fields) {
                     if (error) return reject(error);
                     resolve(results[0]);

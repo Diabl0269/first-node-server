@@ -4,9 +4,9 @@ const bodyParser = require('body-parser');
 const app = express();
 const userManager = require('./usersManager');
 const jwt = require('jsonwebtoken');
-const verifyToken = require('./utilities/verifyToken');
+const verifyToken = require('./utilities/cyrpt/verifyToken');
 app.use(bodyParser.json()); 
-require('./server_init')(app);
+require('./utilities/server_init')(app);
 
 //get a user by id
 app.get('/user/:userId/details', verifyToken, (req, res) => {
@@ -45,14 +45,6 @@ app.post('/user/details/update', (req, res) => {
         };
     })
 });
-
-//add a user
-// app.post('/user/details/add', inputValidation, (req, res) => {
-//     const userDetails = req.body;
-//     userManager.addUser(userDetails).then((userDetails) => {
-//         res.send(JSON.stringify(userDetails));
-//     });
-// });
 
 //Login - get a user by id and password and return jwt
 app.post('/api/login', (req, res) => {
